@@ -16,7 +16,7 @@ function loadGame() {
   lockBoard = false;
   matchesFound = 0;
 
-  const numPairs = 12; // increase to 8 pairs (16 cards total)
+  const numPairs = 8; // increase to 8 pairs (16 cards total)
   images = [];
   for (let i = 1; i <= numPairs; i++) {
     images.push(`img${i}.jpg`, `img${i}.jpg`);
