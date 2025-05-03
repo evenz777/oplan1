@@ -16,7 +16,7 @@ function loadGame() {
   lockBoard = false;
   matchesFound = 0;
 
-  const numTriplets = 3; // 3 sets = 9 cards
+  const numTriplets = 11; // 3 sets = 9 cards
   images = [];
   for (let i = 1; i <= numTriplets; i++) {
     images.push(`img${i}.jpg`, `img${i}.jpg`, `img${i}.jpg`);
@@ -71,3 +71,31 @@ function flipCard(card) {
   if (img1 === img2 && img2 === img3) {
     firstCard.classList.add("matched");
     secondCard.classList.add("matched");
+    thirdCard.classList.add("matched");
+    matchesFound++;
+
+    if (matchesFound === images.length / 3) {
+      setTimeout(() => {
+        statusDiv.textContent = "🎉 Task Completed! Restarting...";
+        setTimeout(loadGame, 2000);
+      }, 500);
+    }
+
+    resetTurn();
+  } else {
+    setTimeout(() => {
+      firstCard.classList.remove("flip");
+      secondCard.classList.remove("flip");
+      thirdCard.classList.remove("flip");
+      resetTurn();
+    }, 1000);
+  }
+}
+
+function resetTurn() {
+  [firstCard, secondCard, thirdCard] = [null, null, null];
+  lockBoard = false;
+}
+
+// Start the game
+loadGame();
