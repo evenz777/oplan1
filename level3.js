@@ -16,7 +16,7 @@ function loadGame() {
   lockBoard = false;
   matchesFound = 0;
 
-  const numTriplets = 11; // 3 sets = 9 cards
+  const numTriplets = 12; // 3 sets = 9 cards
   images = [];
   for (let i = 1; i <= numTriplets; i++) {
     images.push(`img${i}.jpg`, `img${i}.jpg`, `img${i}.jpg`);
