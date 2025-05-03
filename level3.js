@@ -16,7 +16,7 @@ function loadGame() {
   lockBoard = false;
   matchesFound = 0;
 
-  const numPairs = 16; // increase to 8 pairs (16 cards total)
+  const numPairs = 3; // 3 pairs = 6 cards
   images = [];
   for (let i = 1; i <= numPairs; i++) {
     images.push(`img${i}.jpg`, `img${i}.jpg`);
@@ -67,7 +67,7 @@ function flipCard(card) {
     secondCard.classList.add("matched");
     matchesFound++;
 
-    if (matchesFound === images.length / 3) {
+    if (matchesFound === images.length / 2) {
       setTimeout(() => {
         statusDiv.textContent = "🎉 Task Completed! Restarting...";
         setTimeout(loadGame, 2000);
