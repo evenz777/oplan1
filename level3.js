@@ -1,6 +1,6 @@
 const board = document.getElementById("gameBoard");
 const statusDiv = document.getElementById("status");
-let firstCard, secondCard;
+let firstCard, secondCard, thirdCard;
 let lockBoard = false;
 let matchesFound = 0;
 let images = [];
@@ -11,15 +11,15 @@ function shuffle(array) {
 
 function loadGame() {
   board.innerHTML = "";
-  statusDiv.textContent = "Match all cards!";
-  firstCard = secondCard = null;
+  statusDiv.textContent = "Match all triplets!";
+  firstCard = secondCard = thirdCard = null;
   lockBoard = false;
   matchesFound = 0;
 
-  const numPairs = 3; // 3 pairs = 6 cards
+  const numTriplets = 3; // 3 sets = 9 cards
   images = [];
-  for (let i = 1; i <= numPairs; i++) {
-    images.push(`img${i}.jpg`, `img${i}.jpg`);
+  for (let i = 1; i <= numTriplets; i++) {
+    images.push(`img${i}.jpg`, `img${i}.jpg`, `img${i}.jpg`);
   }
   images = shuffle(images);
   images.forEach(img => board.appendChild(createCard(img)));
@@ -47,7 +47,7 @@ function createCard(imageSrc) {
 }
 
 function flipCard(card) {
-  if (lockBoard || card === firstCard || card.classList.contains("matched")) return;
+  if (lockBoard || card.classList.contains("flip") || card.classList.contains("matched")) return;
 
   card.classList.add("flip");
 
@@ -56,38 +56,18 @@ function flipCard(card) {
     return;
   }
 
-  secondCard = card;
+  if (!secondCard) {
+    secondCard = card;
+    return;
+  }
+
+  thirdCard = card;
   lockBoard = true;
 
-  const firstImg = firstCard.querySelector(".card-back").style.backgroundImage;
-  const secondImg = secondCard.querySelector(".card-back").style.backgroundImage;
+  const img1 = firstCard.querySelector(".card-back").style.backgroundImage;
+  const img2 = secondCard.querySelector(".card-back").style.backgroundImage;
+  const img3 = thirdCard.querySelector(".card-back").style.backgroundImage;
 
-  if (firstImg === secondImg) {
+  if (img1 === img2 && img2 === img3) {
     firstCard.classList.add("matched");
     secondCard.classList.add("matched");
-    matchesFound++;
-
-    if (matchesFound === images.length / 2) {
-      setTimeout(() => {
-        statusDiv.textContent = "🎉 Task Completed! Restarting...";
-        setTimeout(loadGame, 2000);
-      }, 500);
-    }
-
-    resetTurn();
-  } else {
-    setTimeout(() => {
-      firstCard.classList.remove("flip");
-      secondCard.classList.remove("flip");
-      resetTurn();
-    }, 1000);
-  }
-}
-
-function resetTurn() {
-  [firstCard, secondCard] = [null, null];
-  lockBoard = false;
-}
-
-// Start the game
-loadGame();
