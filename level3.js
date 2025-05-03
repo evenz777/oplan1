@@ -67,7 +67,7 @@ function flipCard(card) {
     secondCard.classList.add("matched");
     matchesFound++;
 
-    if (matchesFound === images.length / 2) {
+    if (matchesFound === images.length / 3) {
       setTimeout(() => {
         statusDiv.textContent = "🎉 Task Completed! Restarting...";
         setTimeout(loadGame, 2000);
