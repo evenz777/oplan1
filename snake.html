@@ -53,7 +53,19 @@
     <button class="btn" onclick="setDirection('down')">⬇️</button>
     <button class="btn" onclick="setDirection('right')">➡️</button>
   </div>
-  <a href="index.html" class="back-button">← Back</a>
+    <a href="index.html" style="
+  position: absolute;
+  top: 80px;
+  left: 20px;
+  padding: 10px 15px;
+  background-color: #0ff;
+  color: #000;
+  font-family: 'Orbitron', sans-serif;
+  border-radius: 8px;
+  box-shadow: 0 0 10px #0ff;
+  text-decoration: none;
+  font-size: 16px;
+">← Back</a>
   <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
