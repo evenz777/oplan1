@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Futuristic Snake Game</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      margin: 0;
+      background: radial-gradient(circle, #0f0c29, #302b63, #24243e);
+      overflow: hidden;
+      font-family: 'Orbitron', sans-serif;
+      touch-action: none;
+    }
+    canvas {
+      display: block;
+      margin: auto;
+      background-color: rgba(0, 0, 0, 0.2);
+      box-shadow: 0 0 40px #0ff;
+      max-width: 90vw;
+      max-height: 90vh;
+    }
+    #level {
+      color: #0ff;
+      text-align: center;
+      font-size: 1.5em;
+      margin-top: 10px;
+    }
+    #controls {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .btn {
+      background: #0ff;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      font-size: 1.2em;
+      border-radius: 10px;
+      color: #000;
+      box-shadow: 0 0 10px #0ff;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
+</head>
+<body>
+  <canvas id="gameCanvas" width="600" height="600"></canvas>
+  <div id="level">Level: 1</div>
+  <div id="controls">
+    <button class="btn" onclick="setDirection('up')">⬆️</button><br />
+    <button class="btn" onclick="setDirection('left')">⬅️</button>
+    <button class="btn" onclick="setDirection('down')">⬇️</button>
+    <button class="btn" onclick="setDirection('right')">➡️</button>
+  </div>
+  <a href="index.html" class="back-button">← Back</a>
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const gridSize = 20;
+    const tileCount = canvas.width / gridSize;
+
+    let snake = [{ x: 10, y: 10 }];
+    let velocity = { x: 0, y: 0 };
+    let food = { x: 5, y: 5 };
+    let level = 1;
+    let speed = 150;
+    let maxLevels = 5;
+    let foodEscapeTimer = 0;
+
+    function futuristicEffect() {
+      const gradient = ctx.createRadialGradient(
+        canvas.width / 2,
+        canvas.height / 2,
+        50,
+        canvas.width / 2,
+        canvas.height / 2,
+        300
+      );
+      gradient.addColorStop(0, "#0ff");
+      gradient.addColorStop(1, "rgba(0,0,0,0.7)");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function drawSnake() {
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = "#0ff";
+      ctx.fillStyle = "#00ffff";
+      snake.forEach(part => ctx.fillRect(part.x * gridSize, part.y * gridSize, gridSize, gridSize));
+    }
+
+    function drawFood() {
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = "#f0f";
+      ctx.fillStyle = "#ff00ff";
+      ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize, gridSize);
+    }
+
+    function moveSnake() {
+      const head = { x: snake[0].x + velocity.x, y: snake[0].y + velocity.y };
+      snake.unshift(head);
+      if (head.x === food.x && head.y === food.y) {
+        food = randomFoodPosition();
+        foodEscapeTimer = 0;
+        if (snake.length % 5 === 0 && level < maxLevels) {
+          level++;
+          document.getElementById("level").innerText = `Level: ${level}`;
+          speed = Math.max(50, speed - 20);
+        }
+      } else {
+        snake.pop();
+      }
+    }
+
+    function randomFoodPosition() {
+      return {
+        x: Math.floor(Math.random() * tileCount),
+        y: Math.floor(Math.random() * tileCount),
+      };
+    }
+
+    function moveFoodRandomly() {
+      if (Math.random() < 0.3) return; // occasional move only
+      const directions = [
+        { x: 1, y: 0 }, { x: -1, y: 0 },
+        { x: 0, y: 1 }, { x: 0, y: -1 }
+      ];
+      const dir = directions[Math.floor(Math.random() * directions.length)];
+      const newX = food.x + dir.x;
+      const newY = food.y + dir.y;
+      if (newX >= 0 && newX < tileCount && newY >= 0 && newY < tileCount) {
+        food.x = newX;
+        food.y = newY;
+      }
+    }
+
+    function checkCollision() {
+      const head = snake[0];
+      if (
+        head.x < 0 ||
+        head.x >= tileCount ||
+        head.y < 0 ||
+        head.y >= tileCount ||
+        snake.slice(1).some(part => part.x === head.x && part.y === head.y)
+      ) {
+        alert("Game Over!");
+        resetGame();
+      }
+    }
+
+    function resetGame() {
+      snake = [{ x: 10, y: 10 }];
+      velocity = { x: 0, y: 0 };
+      food = { x: 5, y: 5 };
+      level = 1;
+      speed = 150;
+      foodEscapeTimer = 0;
+      document.getElementById("level").innerText = `Level: ${level}`;
+    }
+
+    function gameLoop() {
+      futuristicEffect();
+      moveSnake();
+      checkCollision();
+      drawFood();
+      drawSnake();
+      foodEscapeTimer++;
+      if (foodEscapeTimer % (10 - level) === 0) moveFoodRandomly();
+      setTimeout(gameLoop, speed);
+    }
+
+    function setDirection(dir) {
+      switch (dir) {
+        case "up": if (velocity.y === 0) velocity = { x: 0, y: -1 }; break;
+        case "down": if (velocity.y === 0) velocity = { x: 0, y: 1 }; break;
+        case "left": if (velocity.x === 0) velocity = { x: -1, y: 0 }; break;
+        case "right": if (velocity.x === 0) velocity = { x: 1, y: 0 }; break;
+      }
+    }
+
+    document.addEventListener("keydown", e => {
+      switch (e.key) {
+        case "ArrowUp": setDirection('up'); break;
+        case "ArrowDown": setDirection('down'); break;
+        case "ArrowLeft": setDirection('left'); break;
+        case "ArrowRight": setDirection('right'); break;
+      }
+    });
+
+    gameLoop();
+  </script>
+
+</body>
+</html>

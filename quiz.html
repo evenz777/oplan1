@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bible Quiz Game</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #141e30, #243b55);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    .question-box {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 600px;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    .question {
+      font-size: 1.2em;
+      margin-bottom: 15px;
+    }
+    .options button {
+      background: #00bcd4;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      color: white;
+      font-size: 1em;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .score {
+      margin-top: 20px;
+      font-size: 1.2em;
+    }
+    .level {
+      margin-top: 10px;
+      font-size: 1em;
+    }
+    .result-box {
+      background: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 600px;
+      margin-top: 20px;
+    }
+    .answer-list {
+      text-align: left;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Bible Quiz Game</h1>
+  <div class="question-box">
+    <div class="question" id="question"></div>
+    <div class="options" id="options"></div>
+  </div>
+  <div class="score" id="score">Score: 0</div>
+  <div class="level" id="level">Level: 1</div>
+
+  <script>
+    const quizData = [
+      [
+        { q: "Who built the ark?", options: ["Moses", "Noah", "Abraham", "David"], answer: "Noah" },
+        { q: "Where was Jesus born?", options: ["Nazareth", "Bethlehem", "Jerusalem", "Capernaum"], answer: "Bethlehem" },
+        { q: "What is the first book of the Bible?", options: ["Exodus", "Genesis", "Leviticus", "Numbers"], answer: "Genesis" },
+        { q: "How many days did God take to create the world?", options: ["5", "6", "7", "8"], answer: "6" },
+        { q: "Who was swallowed by a great fish?", options: ["Elijah", "Moses", "Jonah", "Paul"], answer: "Jonah" },
+        { q: "Who betrayed Jesus?", options: ["Peter", "Judas", "John", "Thomas"], answer: "Judas" },
+        { q: "What did God create on the 7th day?", options: ["Earth", "Light", "Man", "Rest"], answer: "Rest" },
+        { q: "Who parted the Red Sea?", options: ["David", "Moses", "Abraham", "Elijah"], answer: "Moses" },
+        { q: "Which disciple walked on water?", options: ["Peter", "John", "James", "Thomas"], answer: "Peter" },
+        { q: "Who is the mother of Jesus?", options: ["Eve", "Miriam", "Sarah", "Mary"], answer: "Mary" },
+      ],
+      [
+        { q: "How many apostles did Jesus have?", options: ["10", "11", "12", "13"], answer: "12" },
+        { q: "Who is the first king of Israel?", options: ["David", "Saul", "Solomon", "Joshua"], answer: "Saul" },
+        { q: "What is the shortest verse in the Bible?", options: ["Jesus wept", "God is love", "I am the way", "Be still"], answer: "Jesus wept" },
+        { q: "Where did Jesus perform his first miracle?", options: ["Jerusalem", "Nazareth", "Capernaum", "Cana"], answer: "Cana" },
+        { q: "Who wrote the majority of the New Testament?", options: ["Paul", "John", "Peter", "Luke"], answer: "Paul" },
+        { q: "Who was the first murderer in the Bible?", options: ["Cain", "Abel", "Lamech", "Nimrod"], answer: "Cain" },
+        { q: "Which Old Testament figure is known for his wisdom?", options: ["David", "Moses", "Solomon", "Isaiah"], answer: "Solomon" },
+        { q: "What is the last book of the Bible?", options: ["Revelation", "Jude", "Romans", "Genesis"], answer: "Revelation" },
+        { q: "What animal did Jesus use in his triumphal entry into Jerusalem?", options: ["Horse", "Donkey", "Camel", "Elephant"], answer: "Donkey" },
+        { q: "Who is known as the 'weeping prophet'?", options: ["Elijah", "Jeremiah", "Isaiah", "Daniel"], answer: "Jeremiah" },
+      ],
+      // Add more levels with increasing difficulty...
+    ];
+
+    let currentLevel = 0;
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let answers = [];
+
+    function loadQuestion() {
+      const questionData = quizData[currentLevel][currentQuestionIndex];
+      document.getElementById("question").innerText = questionData.q;
+      const optionsContainer = document.getElementById("options");
+      optionsContainer.innerHTML = "";
+
+      questionData.options.forEach(option => {
+        const button = document.createElement("button");
+        button.innerText = option;
+        button.onclick = () => checkAnswer(option);
+        optionsContainer.appendChild(button);
+      });
+    }
+
+    function checkAnswer(selected) {
+      const questionData = quizData[currentLevel][currentQuestionIndex];
+      if (selected === questionData.answer) {
+        score += 10;
+        answers.push({ question: questionData.q, correctAnswer: questionData.answer, userAnswer: selected });
+        document.getElementById("score").innerText = `Score: ${score}`;
+      } else {
+        answers.push({ question: questionData.q, correctAnswer: questionData.answer, userAnswer: selected });
+      }
+      currentQuestionIndex++;
+
+      if (currentQuestionIndex >= quizData[currentLevel].length) {
+        currentLevel++;
+        currentQuestionIndex = 0;
+        if (currentLevel >= quizData.length) {
+          showResult();
+          return;
+        }
+        document.getElementById("level").innerText = `Level: ${currentLevel + 1}`;
+      }
+      loadQuestion();
+    }
+
+    function showResult() {
+      document.getElementById("question").innerText = `Game Over! Your score: ${score}`;
+      document.getElementById("options").innerHTML = "";
+      document.getElementById("level").innerText = "";
+
+      const resultBox = document.createElement("div");
+      resultBox.classList.add("result-box");
+      resultBox.innerHTML = `
+        <h2>Results</h2>
+        <p>Your final score is: ${score}</p>
+        <div class="answer-list">
+          <h3>Correct Answers:</h3>
+          <ul>
+            ${answers.map(answer => `
+              <li>
+                <strong>Q:</strong> ${answer.question} <br>
+                <strong>Your Answer:</strong> ${answer.userAnswer} <br>
+                <strong>Correct Answer:</strong> ${answer.correctAnswer}
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+      `;
+      document.body.appendChild(resultBox);
+    }
+
+    loadQuestion();
+  </script>
+    <a href="index.html" class="back-button">← Back</a>
+</body>
+</html>
