@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flappy Bird - Endless Mode</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #70c5ce;
+    }
+    canvas {
+      display: block;
+      background-color: #70c5ce;
+      margin: auto;
+      box-shadow: 0 0 40px #000;
+    }
+    #score {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-size: 36px;
+      color: #fff;
+      font-family: Arial, sans-serif;
+    }
+    #message {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 30px;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      max-width: 90vw;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0);
+      border-radius: 10px;
+    }
+    #button {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #1e40af;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <div id="score">Score: 0</div>
+  <div id="message"></div>
+    <a href="index.html" style="
+    position: absolute;
+    top: 80px;
+    left: 20px;
+    padding: 10px 15px;
+    background-color: #0ff;
+    color: #000;
+    font-family: 'Orbitron', sans-serif;
+    border-radius: 8px;
+    box-shadow: 0 0 10px #0ff;
+    text-decoration: none;
+    font-size: 16px;
+  ">← Back</a>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const scoreElement = document.getElementById("score");
+    const messageElement = document.getElementById("message");
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    let bird = { x: 120, y: canvas.height / 2, velocity: 0, radius: 20 };
+    let gravity = 0.5;
+    let lift = -10;
+    let pipes = [];
+    let gameStarted = false;
+    let score = 0;
+    let gapSize = 200;
+    let pipeSpacing = 500;
+    let messageShown = "";
+    let lastPipeTime = 0;
+    let gameOver = false;
+    const pipeInterval = 5000;
+
+    let groundOffset = 0;
+    const groundSpeed = 2;
+    const groundHeight = 80;
+
+    const groundPattern = new Image();
+    groundPattern.src = 'data:image/svg+xml;base64,' + btoa(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="100" height="80">
+        <rect width="100" height="80" fill="#a0522d" />
+        <circle cx="20" cy="70" r="4" fill="#808080" />
+        <circle cx="60" cy="75" r="3" fill="#696969" />
+        <rect x="0" y="60" width="100" height="20" fill="#228B22" />
+        <path d="M0 60 Q25 50 50 60 T100 60" fill="#2e8b57" />
+      </svg>`);
+
+    const messages = [
+      "Life is tough, but so are you.",
+      "Sometimes the hardest part is just getting started.",
+      "Keep going, your breakthrough is near.",
+      "Don't let yesterday take up too much of today.",
+      "Sometimes, all you need is a little faith.",
+      "Dream big. Work hard. Stay focused.",
+      "It's okay to not be okay.",
+      "In the end, we only regret the chances we didn't take.",
+      "The best is yet to come.",
+      "What’s meant for you will find its way.",
+      "Huwag mong gawing dahilan ang takot para hindi matupad ang pangarap mo.",
+      "Minsan, kailangan mong maglakbay mag-isa para malaman mo ang tunay na halaga ng sarili mo.",
+      "Ang sakit pala ng magmahal ng walang kasiguraduhan.",
+      "Lahat tayo ay may mga sugat, pero ang mga sugat na iyon ang nagbibigay ng lakas sa atin.",
+      "Bakit nga ba ako maghihintay kung hindi ka naman nagmamadali?",
+      "Minsan, yung pinakamalapit sa’yo, yun pa yung pinakamalayo.",
+      "Hindi ko na kayang maghintay ng matagal, pero parang ikaw pa lang ang pinipili ko.",
+      "Ang hirap magpatuloy, pero hindi ko kayang tumigil.",
+      "Baka nga, masyado lang tayong nagmamadali sa isang bagay na hindi naman pala para sa atin.",
+      "Iniwan mo ako sa ere, parang bitin na kwento.",
+      "Mahal kita, pero hindi sapat ang pagmamahal para manatili ka.",
+      "Masakit makita na masaya ka na… pero hindi ako ang dahilan.",
+      "Hindi ako galit. Nasasaktan lang ako kasi mahal kita.",
+      "Pinili mong hindi ako piliin.",
+      "Sana ako na lang ulit… pero alam kong hindi na pwede.",
+      "Bumabalik ka lang kapag wala ka nang makapitan.",
+      "Hindi ako option, tao ako na may damdamin.",
+      "Kahit anong pilit kong lumaban, ako pa rin yung talo sa huli.",
+      "Bakit ganun? Mahal kita pero mas mahal mo siya.",
+      "Akala ko ako na. Akala ko lang pala.",
+    "Ako na lang sana ulit, kaso ayaw mo na.",
+        "Ako yung naiwan, ako yung nasaktan, pero ikaw pa rin ang mahal ko.",
+        "Ang dami kong tanong, pero wala ka nang sagot.",
+        "Ang daming pangako, pero isa lang ang natupad: iniwan mo ako.",
+        "Ang hirap kapag ikaw na lang ang lumalaban.",
+        "Ang hirap kapag ikaw na lang ang masaya sa relasyon.",
+        "Ang hirap mong kalimutan, pero kailangan.",
+        "Ang pag-ibig parang kape, minsan matamis, madalas mapait.",
+        "Ang pagmamahal ay hindi laging masaya madalas masakit.",
+        "Ang sakit kapag ikaw na lang ang nagbibigay.",
+        "Ang sakit kapag ikaw yung pinili niya para saktan.",
+        "Ang sakit ng wala ka na, pero ako nandito pa rin.",
+        "Ang totoo, iniwan mo na ako matagal na.",
+        "Ang tunay na pagmamahal, hindi sinusukuan.",
+        "Ang tunay na pagmamahal, kahit masakit, hindi ka iiwan.",
+        "Ayoko na, pero mahal pa rin kita.",
+        "Bakit ka pa nagpakita kung aalis ka rin pala?",
+        "Ginawa kitang mundo, pero hindi mo ako naging parte.",
+        "Ginawa ko ang lahat, pero hindi pa rin pala sapat.",
+        "Ginawa ko ang lahat pero lahat ng yun balewala.",
+        "Gusto kitang kalimutan, pero hindi ko kaya.",
+        "Hindi ako galit, pero hindi na rin ako masaya.",
+        "Hindi ako galit. Masakit lang.",
+        "Hindi ako palaging matapang, pero hindi rin ako susuko.",
+        "Hindi ako perpekto, pero totoo akong nagmahal.",
+        "Hindi ko hiniling na saktan mo ako, pero ginawa mo.",
+        "Hindi ko na kaya, pero mahal pa rin kita.",
+        "Hindi ko na kaya, pero pinipilit ko pa rin.",
+        "Hindi ko na kayang ipaglaban ang taong ayaw na sa akin.",
+        "Hindi lahat ng maganda ay para sayo.",
+        "Hindi lahat ng mahal mo, magiging sayo.",
+        "Hindi lahat ng nagmamahal, minamahal pabalik.",
+        "Hindi lahat ng ngiti ay masaya.",
+        "Hindi lahat ng umaasa, napapasaya.",
+        "Hindi mo ako deserve, at alam kong mas deserve ko pa.",
+        "Hindi mo ako deserve, at natutunan ko nang tanggapin yun.",
+        "Hindi mo ako kailangan, pero kailangan pa rin kita.",
+        "Hindi mo kailangang ipaglaban ang taong matagal ka nang iniwan.",
+        "Hindi mo kailangang ipaliwanag ang sakit ramdam ko na.",
+        "Hindi mo makakamit ang tamang tao kung kapit ka pa sa mali.",
+        "Hindi na kita hinihintay, pero umaasa pa rin.",
+        "Iniwan mo ako, pero naiwan pa rin ang damdamin ko sayo.",
+        "Kahit anong pilit, hindi mo kayang buuin ang taong wasak.",
+        "Kahit anong saya mo, ako pa rin yung iniisip ko.",
+        "Kahit gaano ka kagaling magmahal, hindi ka pa rin niya pipiliin.",
+        "Kahit gaano ko gustuhin, wala na talaga.",
+        "Kahit ikaw ang may mali, ako pa rin ang humingi ng tawad.",
+        "Kahit ilang beses kitang patawarin, hindi na maibabalik ang dati.",
+        "Kahit saan ako tumingin, ikaw pa rin ang hanap ko.",
+        "Kung kailan ayos na ako, saka ka babalik.",
+        "Kung mahal mo ako, bakit ka umalis?",
+        "Kung mahal mo siya, palayain mo na ako.",
+        "Kung mahal mo, ipaglaban mo hanggang kaya mo.",
+        "Lagi na lang ako nauuna, pero sa huli, ako ang nauuna ring mawala.",
+        "Lahat ng bagay may hangganan, pati ako.",
+        "Lahat tayo may hangganan even ang pagmamahal.",
+        "Mas gusto ko nang masaktan kesa hindi ka makita.",
+        "Mas okay pang masaktan ng totoo, kesa paasahin ka lang.",
+        "Masakit magmahal ng taong hindi ka kayang mahalin.",
+        "Masarap magmahal, pero masakit kapag wala kang kapalit.",
+        "Masaya ka na ba? Kasi ako hindi pa rin.",
+        "Minsan ang kailangan mo lang ay yakap, hindi paliwanag.",
+        "Minsan ikaw lang talaga ang hindi niya gusto.",
+        "Minsan kahit gaano mo kamahal, kailangan mo pa ring bitiwan.",
+        "Minsan kailangan mong masaktan para matutong magpahalaga sa sarili.",
+        "Minsan kailangan mong matutong tumigil.",
+        "Minsan masarap din maging selfish para sa sarili mo.",
+        "Minsan, hindi sapat ang mahal mo siya, kailangan mahal ka rin niya.",
+        "Minsan, mahal mo siya kasi siya lang ang meron ka.",
+        "Minsan, 'okay lang ako' ang pinakamasakit na kasinungalingan.",
+        "Nagmahal ako, nasaktan, natuto.",
+        "Nagpakatotoo ako, pero hindi pala yun sapat.",
+        "Napagod na rin akong intindihin ka.",
+        "Nasaan ka noong kailangan kita?",
+        "Nawala ka na, pero mahal pa rin kita.",
+        "Patawad kung minahal kita ng sobra.",
+        "Pilit mong binubuo ang taong hindi ka kayang mahalin.",
+        "Pilit mong pinapasaya ang taong hindi naman ikaw ang dahilan ng saya niya.",
+        "Pinili kitang mahalin kahit alam kong masasaktan ako.",
+        "Pinili kitang mahalin, kahit ikaw hindi mo ako pinili.",
+        "Pinipili kitang mahalin kahit hindi mo ako pinipili.",
+        "Pinipilit kong ngumiti kahit gusto ko nang umiyak.",
+        "Puno ng 'sana' ang kwento natin.",
+        "Sa bawat iyak, natututo akong maging matatag.",
+        "Sa dulo ng lahat, ako pa rin yung talunan.",
+        "Sa huli, hindi pala pagmamahal ang sukatan ng relasyon.",
+        "Sa huli, mahal ko pa rin ang taong nanakit sa akin.",
+        "Sa pagmamahal, walang garantiyang masaya ka.",
+        "Sa sobrang sakit, tinuruan mo akong magmahal sa sarili ko.",
+        "Sadyang may taong hanggang alaala na lang.",
+        "Salamat sa alaala, kahit masakit.",
+        "Sana maramdaman mong ako lang pala ang nagmamahal sayo.",
+        "Sana pinaglaban mo rin ako.",
+        "Sana sa susunod, ako na.",
+        "Sana sa susunod, hindi na ako ang masasaktan.",
+        "Umaasa sa wala, nasasaktan ng sobra.",
+        "Umasa ako. Mali pala.",
+        "Wala akong ibang hiniling kundi mahalin mo ako pabalik.",
+        "Wala na akong luha, pero ikaw pa rin ang dahilan.",
+    ];
+
+    function drawBird() {
+      ctx.fillStyle = "#FF0";
+      ctx.beginPath();
+      ctx.arc(bird.x, bird.y, bird.radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function createPipe() {
+      let top = Math.random() * (canvas.height / 2);
+      let pipe = {
+        x: canvas.width,
+        top,
+        bottom: top + gapSize,
+        width: 60,
+        passed: false
+      };
+      pipes.push(pipe);
+    }
+
+    function drawPipes() {
+      for (let i = 0; i < pipes.length; i++) {
+        let p = pipes[i];
+        ctx.fillStyle = "#228B22";
+        ctx.fillRect(p.x, 0, p.width, p.top);
+        ctx.fillRect(p.x, p.bottom, p.width, canvas.height - groundHeight - p.bottom);
+
+        if (!gameOver) {
+          p.x -= groundSpeed;
+        }
+
+        if (
+          bird.x + bird.radius > p.x &&
+          bird.x - bird.radius < p.x + p.width &&
+          (bird.y - bird.radius < p.top || bird.y + bird.radius > p.bottom)
+        ) {
+          if (!p.hit) {
+            messageShown = messages[Math.floor(Math.random() * messages.length)];
+            gameOver = true;
+            p.hit = true;
+            setTimeout(() => location.reload(), 2000);
+          }
+        }
+
+        if (!p.passed && p.x + p.width < bird.x) {
+          score++;
+          p.passed = true;
+        }
+      }
+
+      pipes = pipes.filter(p => p.x + p.width > -pipeSpacing);
+    }
+
+    function updateBird() {
+      if (gameOver) return;
+      bird.velocity += gravity;
+      bird.y += bird.velocity;
+
+      if (bird.y + bird.radius > canvas.height - groundHeight || bird.y - bird.radius < 0) {
+        if (!gameOver) {
+          messageShown = messages[Math.floor(Math.random() * messages.length)];
+          gameOver = true;
+          setTimeout(() => location.reload(), 2000);
+        }
+      }
+    }
+
+    function drawBackground() {
+      ctx.fillStyle = "#70c5ce";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      groundOffset -= groundSpeed;
+      if (groundOffset <= -canvas.width) {
+        groundOffset = 0;
+      }
+
+      const pattern = ctx.createPattern(groundPattern, 'repeat');
+      if (pattern) {
+        ctx.fillStyle = pattern;
+        ctx.translate(groundOffset, 0);
+        ctx.fillRect(-groundOffset, canvas.height - groundHeight, canvas.width * 2, groundHeight);
+        ctx.translate(-groundOffset, 0);
+      }
+    }
+
+    function updateScore() {
+      scoreElement.textContent = "Score: " + score;
+    }
+
+    function gameLoop(timestamp) {
+      drawBackground();
+
+      if (!gameStarted) {
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        ctx.font = "bold 24px Arial, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("Tap or Press Space to Start", canvas.width / 2, canvas.height / 2);
+        drawBird();
+        requestAnimationFrame(gameLoop);
+        return;
+      }
+
+      if (gameOver) {
+        drawBird();
+        drawPipes();
+        updateScore();
+        messageElement.textContent = messageShown;
+        return;
+      }
+
+      if (!lastPipeTime) lastPipeTime = timestamp;
+      if (timestamp - lastPipeTime > pipeInterval) {
+        createPipe();
+        lastPipeTime = timestamp;
+      }
+
+      updateBird();
+      drawBird();
+      drawPipes();
+      updateScore();
+      messageElement.textContent = messageShown;
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    function flap() {
+      if (!gameStarted) {
+        gameStarted = true;
+        let pipe = {
+          x: canvas.width - (canvas.width - bird.x) / 2,
+          top: Math.random() * (canvas.height / 2),
+          width: 60,
+          passed: false
+        };
+        pipe.bottom = pipe.top + gapSize;
+        pipes.push(pipe);
+        lastPipeTime = performance.now();
+      }
+      if (!gameOver) bird.velocity = lift;
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space") flap();
+    });
+
+    canvas.addEventListener("touchstart", flap);
+
+    requestAnimationFrame(gameLoop);
+  </script>
+</body>
+</html>
